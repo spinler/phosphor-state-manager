@@ -1,8 +1,11 @@
 #include <cassert>
+#include <config.h>
 #include <phosphor-logging/log.hpp>
+#include <phosphor-logging/elog-errors.hpp>
 #include <sdbusplus/exception.hpp>
 #include <sys/sysinfo.h>
 #include "bmc_state_manager.hpp"
+#include "xyz/openbmc_project/Common/error.hpp"
 
 namespace phosphor
 {
@@ -16,6 +19,7 @@ namespace server = sdbusplus::xyz::openbmc_project::State::server;
 
 using namespace phosphor::logging;
 using sdbusplus::exception::SdBusError;
+using sdbusplus::xyz::openbmc_project::Common::Error::InternalFailure;
 
 constexpr auto obmcStandbyTarget = "multi-user.target";
 constexpr auto signalDone = "done";
@@ -111,11 +115,17 @@ void BMC::subscribeToSystemdSignals()
 
     try
     {
-        this->bus.call(method);
+        // The phosphor-state-manager service start around the same time
+        // systemd is mounting the host filesystems. This can cause a delay
+        // in D-bus calls to systemd. Use a configurable timeout when
+        // subscribing to systemd signals. The timeout is in microseconds
+        this->bus.call(method, (SYSTEMD_SUBSCRIBE_DBUS_TIMEOUT * 1000000L));
     }
     catch (const SdBusError& e)
     {
-        log<level::INFO>("Error in Subscribe", entry("ERROR=%s", e.what()));
+        log<level::ERR>("Failed to subscribe to systemd signals",
+                        entry("ERR=%s", e.what()));
+        elog<InternalFailure>();
     }
 
     return;
