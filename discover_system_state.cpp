@@ -14,6 +14,7 @@
 #include <sdbusplus/exception.hpp>
 #include <sdbusplus/server.hpp>
 
+#include <filesystem>
 #include <iostream>
 #include <map>
 #include <string>
@@ -80,6 +81,13 @@ int main(int argc, char** argv)
             "BMC was reset due to pinhole reset, no power restore policy will be run");
         return 0;
     }
+    else if (bmcRebootCause ==
+             "xyz.openbmc_project.State.BMC.RebootCause.Watchdog")
+    {
+        info(
+            "BMC was reset due to cold reset, no power restore policy will be run");
+        return 0;
+    }
 
     /* The logic here is to first check the one-time PowerRestorePolicy setting.
      * If this property is not the default then look at the persistent
@@ -110,6 +118,20 @@ int main(int argc, char** argv)
         {
             // one_time is set to None so use the customer setting
             info("One time not set, check user setting of power policy");
+
+            // Only use customer setting if chassis power was on prior to
+            // the BMC reboot
+            auto size = std::snprintf(nullptr, 0, CHASSIS_LOST_POWER_FILE, 0);
+            size++; // null
+            std::unique_ptr<char[]> buf(new char[size]);
+            std::snprintf(buf.get(), size, CHASSIS_LOST_POWER_FILE, 0);
+            if (!fs::exists(buf.get()))
+            {
+                info(
+                    "Chassis power was not on prior to BMC reboot so do not run any power policy");
+                return 0;
+            }
+
             auto reply = bus.call(methodUserSetting);
             reply.read(result);
             powerPolicy = std::get<std::string>(result);
