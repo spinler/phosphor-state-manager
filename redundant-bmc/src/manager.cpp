@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "manager.hpp"
 
+#include "active_role_handler.hpp"
+#include "passive_role_handler.hpp"
+
 #include <phosphor-logging/lg2.hpp>
 
 namespace rbmc
@@ -23,7 +26,23 @@ sdbusplus::async::task<> Manager::startup()
 
     redundancyInterface.role(determineRole());
 
+    spawnRoleHandler();
+
     co_return;
+}
+
+void Manager::spawnRoleHandler()
+{
+    if (redundancyInterface.role() == Role::Active)
+    {
+        handler = std::make_unique<ActiveRoleHandler>(ctx, services);
+    }
+    else
+    {
+        handler = std::make_unique<PassiveRoleHandler>(ctx, services);
+    }
+
+    ctx.spawn(handler->start());
 }
 
 // clang-tidy currently mangles this into something unreadable
