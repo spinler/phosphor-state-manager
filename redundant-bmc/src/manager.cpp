@@ -52,6 +52,7 @@ Manager::Manager(sdbusplus::async::context& ctx,
 // NOLINTNEXTLINE
 sdbusplus::async::task<> Manager::startup()
 {
+    co_await services->init();
     co_await sibling->init();
 
     // If we know the role must be passive, set that now,

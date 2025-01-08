@@ -4,15 +4,30 @@
 #include <openssl/evp.h>
 
 #include <phosphor-logging/lg2.hpp>
+#include <xyz/openbmc_project/ObjectMapper/client.hpp>
+#include <xyz/openbmc_project/State/Chassis/client.hpp>
 
 #include <fstream>
 
 namespace rbmc
 {
 
+using ChassisState = sdbusplus::client::xyz::openbmc_project::state::Chassis<>;
+using ObjectMapper = sdbusplus::client::xyz::openbmc_project::ObjectMapper<>;
+using ChassisPropMap =
+    std::unordered_map<std::string, ChassisState::PropertiesVariant>;
+using ChassisInterfaceMap = std::map<std::string, ChassisPropMap>;
+
+namespace rules = sdbusplus::bus::match::rules;
+
 namespace object_path
 {
 constexpr auto systemd = "/org/freedesktop/systemd1";
+
+// chassis0 represents the power state of all chassis.
+const std::string chassisState =
+    std::string{ChassisState::namespace_path::value} + '/' +
+    ChassisState::namespace_path::chassis + '0';
 } // namespace object_path
 
 namespace interface
@@ -25,6 +40,112 @@ namespace service
 {
 constexpr auto systemd = "org.freedesktop.systemd1";
 } // namespace service
+
+namespace util
+{
+
+bool getPoweredOnValue(ChassisState::PowerState state)
+{
+    // Consider On, TransitioningToOn, and TransitioningToOff == On.
+    // This may need to be revisited based on what isPoweredOn() is
+    // used for in the future.
+    return state != ChassisState::PowerState::Off;
+}
+
+} // namespace util
+
+// NOLINTNEXTLINE
+sdbusplus::async::task<> ServicesImpl::init()
+{
+    ctx.spawn(watchChassisInterfacesAdded());
+    ctx.spawn(watchChassisPropertiesChanged());
+    co_await readChassisPowerState();
+    co_return;
+}
+
+// NOLINTNEXTLINE
+sdbusplus::async::task<> ServicesImpl::readChassisPowerState()
+{
+    auto mapper = ObjectMapper(ctx)
+                      .service(ObjectMapper::default_service)
+                      .path(ObjectMapper::instance_path);
+
+    std::vector<std::string> stateIface{ChassisState::interface};
+
+    try
+    {
+        auto object =
+            co_await mapper.get_object(object_path::chassisState, stateIface);
+        auto service = object.begin()->first;
+
+        auto stateMgr =
+            ChassisState(ctx).service(service).path(object_path::chassisState);
+
+        auto chassisState = co_await stateMgr.current_power_state();
+        poweredOn = util::getPoweredOnValue(chassisState);
+
+        lg2::debug("initial chassis state is {STATE}", "STATE", chassisState);
+    }
+    catch (const sdbusplus::exception_t& e)
+    {
+        // Not on D-Bus
+    }
+
+    co_return;
+}
+
+// NOLINTNEXTLINE
+sdbusplus::async::task<> ServicesImpl::watchChassisInterfacesAdded()
+{
+    sdbusplus::async::match match(
+        ctx, rules::interfacesAddedAtPath(object_path::chassisState));
+
+    while (!ctx.stop_requested())
+    {
+        auto [_, interfaces] =
+            co_await match
+                .next<sdbusplus::message::object_path, ChassisInterfaceMap>();
+
+        auto it = interfaces.find(ChassisState::interface);
+        if (it != interfaces.end())
+        {
+            auto chassisState = std::get<ChassisState::PowerState>(
+                it->second.at("CurrentPowerState"));
+            poweredOn = util::getPoweredOnValue(chassisState);
+
+            lg2::debug("The added Chassis state is {STATE}", "STATE",
+                       chassisState);
+        }
+    }
+
+    co_return;
+}
+
+// NOLINTNEXTLINE
+sdbusplus::async::task<> ServicesImpl::watchChassisPropertiesChanged()
+{
+    sdbusplus::async::match match(
+        ctx, rules::propertiesChanged(object_path::chassisState,
+                                      ChassisState::interface));
+
+    while (!ctx.stop_requested())
+    {
+        auto [_,
+              properties] = co_await match.next<std::string, ChassisPropMap>();
+
+        auto it = properties.find("CurrentPowerState");
+        if (it != properties.end())
+        {
+            auto chassisState = std::get<ChassisState::PowerState>(it->second);
+            poweredOn = util::getPoweredOnValue(chassisState);
+
+            lg2::debug("Chassis state changed to {STATE}", "STATE",
+                       chassisState);
+        }
+    }
+
+    co_return;
+}
 
 size_t ServicesImpl::getBMCPosition() const
 {
@@ -200,6 +321,16 @@ std::string ServicesImpl::getFWVersion() const
 
     return std::format("{:02X}{:02X}{:02X}{:02X}", digest[0], digest[1],
                        digest[2], digest[3]);
+}
+
+bool ServicesImpl::isPoweredOn() const
+{
+    if (poweredOn.has_value())
+    {
+        return poweredOn.value();
+    }
+
+    throw std::runtime_error("Power state not available");
 }
 
 } // namespace rbmc

@@ -31,6 +31,11 @@ class ServicesImpl : public Services
     explicit ServicesImpl(sdbusplus::async::context& ctx) : ctx(ctx) {}
 
     /**
+     * @brief Sets up watches on the chassis power state.
+     */
+    sdbusplus::async::task<> init() override;
+
+    /**
      * @brief Returns this BMC's position.
      *
      * @return - The position
@@ -73,6 +78,13 @@ class ServicesImpl : public Services
      */
     std::string getFWVersion() const override;
 
+    /**
+     * @brief Says if main power is on.
+     *
+     * @return If power is on
+     */
+    bool isPoweredOn() const override;
+
   private:
     /**
      * @brief Returns the D-Bus object path for the unit in the
@@ -86,9 +98,32 @@ class ServicesImpl : public Services
         getUnitPath(const std::string& unitName) const;
 
     /**
+     * @brief Starts the InterfacesAdded watch for the chassis0 state
+     */
+    sdbusplus::async::task<> watchChassisInterfacesAdded();
+
+    /**
+     * @brief Starts the PropertiesChanged watch for the chassis0 state
+     */
+    sdbusplus::async::task<> watchChassisPropertiesChanged();
+
+    /**
+     * @brief Reads the CurrentPowerState prop on chassis0
+     */
+    sdbusplus::async::task<> readChassisPowerState();
+
+    /**
      * @brief The async context object
      */
     sdbusplus::async::context& ctx;
+
+    /**
+     * @brief The chassis0 power state
+     *
+     * Only valid after the chassis state service has been started.
+     * Will throw if called before then.
+     */
+    std::optional<bool> poweredOn;
 };
 
 } // namespace rbmc
