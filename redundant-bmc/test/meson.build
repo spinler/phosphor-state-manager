@@ -2,9 +2,11 @@
 
 test('rbmc-tests',
   executable('rbmc-tests',
+    'health_monitor_test.cpp',
     'persistent_data_test.cpp',
     'redundancy_test.cpp',
     'role_determination_test.cpp',
+    '../src/health_monitor.cpp',
     '../src/redundancy.cpp',
     '../src/persistent_data.cpp',
     '../src/role_determination.cpp',
