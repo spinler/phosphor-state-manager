@@ -96,7 +96,10 @@ sdbusplus::async::task<> ActiveRoleHandler::siblingHBWarning()
 {
     lg2::warning("Passive heartbeat warning.");
 
-    // TODO: set FailoversPaused
+    if (redundancyInterface.redundancy_enabled())
+    {
+        redMgr.determineAndSetFailoversPaused();
+    }
 
     co_return;
 }
@@ -128,7 +131,8 @@ sdbusplus::async::task<> ActiveRoleHandler::siblingHBStarted()
     }
     else
     {
-        // TODO: Still attempt to unpause failovers.
+        // Still attempt to unpause failovers.
+        redMgr.determineAndSetFailoversPaused();
     }
 
     // TODO: full sync, etc

@@ -114,4 +114,37 @@ std::string getNoRedundancyDescription(NoRedundancyReason reason)
     return desc;
 }
 
+namespace fp
+{
+
+FailoversPausedReasons getFailoversPausedReasons(const fp::Input& input)
+{
+    using enum FailoversPausedReason;
+    FailoversPausedReasons reasons;
+
+    if (!input.siblingHeartbeat)
+    {
+        reasons.insert(noSiblingHeartbeat);
+    }
+
+    return reasons;
+}
+
+std::string getFailoversPausedDescription(FailoversPausedReason reason)
+{
+    using enum FailoversPausedReason;
+    using namespace std::string_literals;
+    std::string desc;
+
+    switch (reason)
+    {
+        case noSiblingHeartbeat:
+        {
+            desc = "No sibling heartbeat"s;
+        }
+    }
+    return desc;
+}
+} // namespace failover
+
 } // namespace rbmc::redundancy

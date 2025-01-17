@@ -140,3 +140,24 @@ TEST(RedundancyTest, GetNoRedundancyDescTest)
     EXPECT_EQ(getNoRedundancyDescription(NoRedundancyReason::codeMismatch),
               "Firmware version mismatch");
 }
+
+TEST(RedundancyTest, TestGetFailoversPausedReasons)
+{
+    using enum fp::FailoversPausedReason;
+    fp::Input input{.siblingHeartbeat = true};
+
+    auto reasons = fp::getFailoversPausedReasons(input);
+    EXPECT_TRUE(reasons.empty());
+
+    input.siblingHeartbeat = false;
+    reasons = fp::getFailoversPausedReasons(input);
+    EXPECT_EQ(reasons.size(), 1);
+    EXPECT_TRUE(std::ranges::contains(reasons, noSiblingHeartbeat));
+}
+
+TEST(RedundancyTest, GetFailoversPausedDescTest)
+{
+    EXPECT_EQ(fp::getFailoversPausedDescription(
+                  fp::FailoversPausedReason::noSiblingHeartbeat),
+              "No sibling heartbeat");
+}

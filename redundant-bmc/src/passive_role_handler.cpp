@@ -31,7 +31,7 @@ sdbusplus::async::task<> PassiveRoleHandler::start()
 
     try
     {
-        // Only the active needs NoRedundancyDetails persisted.
+        // Only the active BMC needs NoRedundancyDetails persisted.
         data::remove(data::key::noRedDetails);
     }
     catch (const std::exception& e)
@@ -39,6 +39,17 @@ sdbusplus::async::task<> PassiveRoleHandler::start()
         lg2::error(
             "Failed while removing NoRedundancyDetails saved value: {ERROR}",
             "ERROR", e);
+    }
+
+    try
+    {
+        // Only the active BMC needs this persisted.
+        data::remove(data::key::failoversPausedDetails);
+    }
+    catch (const std::exception& e)
+    {
+        lg2::error("Failed removing failoversPausedDetails: {ERROR}", "ERROR",
+                   e);
     }
 
     co_return;

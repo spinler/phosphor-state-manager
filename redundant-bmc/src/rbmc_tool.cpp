@@ -90,8 +90,8 @@ sdbusplus::async::task<>
             auto bmcState = co_await getBMCState(ctx);
             std::cout << std::format("BMC State:           {}\n", bmcState);
 
-            std::cout << std::format("Failovers Paused:    {}\n",
-                                     false); // TODO
+            auto paused = std::get<bool>(props.at("FailoversPaused"));
+            std::cout << std::format("Failovers Paused:    {}\n", paused);
             std::cout << std::format("FW version hash:     {}\n",
                                      services.getFWVersion());
             std::cout << std::format("Provisioned:         {}\n",
@@ -111,6 +111,28 @@ sdbusplus::async::task<>
                 auto details = data::read<NoRedDetails>(data::key::noRedDetails)
                                    .value_or(NoRedDetails{});
                 std::cout << std::format("Reasons for no BMC redundancy:\n");
+                if (!details.empty())
+                {
+                    for (const auto& d : std::views::values(details))
+                    {
+                        std::cout << std::format("    {}\n", d);
+                    }
+                }
+                else
+                {
+                    std::cout << std::format("    Unknown\n");
+                }
+            }
+
+            if ((role == "Active") && enabled && paused)
+            {
+                using Details =
+                    std::map<rbmc::redundancy::fp::FailoversPausedReason,
+                             std::string>;
+                auto details =
+                    data::read<Details>(data::key::failoversPausedDetails)
+                        .value_or(Details{});
+                std::cout << std::format("Reasons for failovers paused:\n");
                 if (!details.empty())
                 {
                     for (const auto& d : std::views::values(details))

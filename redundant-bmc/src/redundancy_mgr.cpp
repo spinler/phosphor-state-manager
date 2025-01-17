@@ -22,12 +22,26 @@ RedundancyMgr::RedundancyMgr(sdbusplus::async::context& ctx, Services& services,
     {
         lg2::error("Failed removing NoRedundancyDetails: {ERROR}", "ERROR", e);
     }
+
+    try
+    {
+        data::remove(data::key::failoversPausedDetails);
+    }
+    catch (const std::exception& e)
+    {
+        lg2::error("Failed removing failoversPausedDetails: {ERROR}", "ERROR",
+                   e);
+    }
 }
 
 // NOLINTNEXTLINE
 void RedundancyMgr::determineAndSetRedundancy()
 {
     enableOrDisableRedundancy(getNoRedundancyReasons());
+
+    // Make sure FailoversPaused is up to date
+    determineAndSetFailoversPaused();
+
     redundancyDetermined = true;
 }
 
@@ -117,6 +131,48 @@ void RedundancyMgr::disableRedPropChanged(bool disable)
         "DISABLE", disable);
 
     determineAndSetRedundancy();
+}
+
+void RedundancyMgr::determineAndSetFailoversPaused()
+{
+    namespace fp = redundancy::fp;
+    fp::Input input{.siblingHeartbeat = sibling.hasHeartbeat()};
+    // TODO: additional inputs
+
+    auto reasons = fp::getFailoversPausedReasons(input);
+
+    std::map<fp::FailoversPausedReason, std::string> details;
+
+    std::ranges::transform(
+        reasons, std::inserter(details, details.begin()),
+        [](const auto& reason) {
+            auto desc = fp::getFailoversPausedDescription(reason);
+            lg2::info("Failovers paused because: {DESC}", "DESC", desc);
+            return std::pair{reason, desc};
+        });
+
+    try
+    {
+        data::write(data::key::failoversPausedDetails, details);
+    }
+    catch (const std::exception& e)
+    {
+        lg2::error("Failed serializing FailoversPausedReasons: {ERROR}",
+                   "ERROR", e);
+    }
+
+    if (!reasons.empty())
+    {
+        redundancyInterface.failovers_paused(true);
+    }
+    else
+    {
+        if (redundancyInterface.failovers_paused())
+        {
+            lg2::warning("Unpausing failovers");
+            redundancyInterface.failovers_paused(false);
+        }
+    }
 }
 
 } // namespace rbmc

@@ -67,5 +67,42 @@ NoRedundancyReasons getNoRedundancyReasons(const Input& input);
  */
 std::string getNoRedundancyDescription(NoRedundancyReason reason);
 
+namespace fp
+{
+
+/**
+ * @brief Inputs to the getFailoversPausedReasons function
+ */
+struct Input
+{
+    bool siblingHeartbeat;
+};
+
+/**
+ * @brief Reasons why failovers have to be paused
+ */
+enum class FailoversPausedReason
+{
+    noSiblingHeartbeat
+};
+
+using FailoversPausedReasons = std::set<FailoversPausedReason>;
+
+/**
+ * @brief Returns the reasons that failovers must be paused
+ *
+ * @return The reasons.  Empty there are none.
+ */
+FailoversPausedReasons getFailoversPausedReasons(const fp::Input& input);
+
+/**
+ * @brief Return the string description of the reason
+ *
+ * @return The human readable description.
+ */
+std::string getFailoversPausedDescription(FailoversPausedReason reason);
+
+} // namespace fp
+
 } // namespace redundancy
 } // namespace rbmc
