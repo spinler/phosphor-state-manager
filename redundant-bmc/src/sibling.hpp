@@ -30,6 +30,7 @@ class Sibling
         sdbusplus::common::xyz::openbmc_project::state::BMC::BMCState;
     using RedundancyEnabledCallback = std::function<void(bool)>;
     using BMCStateCallback = std::function<void(BMCState)>;
+    using HeartbeatCallback = std::function<void(bool)>;
 
     Sibling() = default;
     virtual ~Sibling() = default;
@@ -147,6 +148,7 @@ class Sibling
     {
         redEnabledCBs.erase(name);
         bmcStateCBs.erase(name);
+        heartbeatCBs.erase(name);
     }
 
     /**
@@ -155,6 +157,16 @@ class Sibling
      * @param[in] name - The name to clear
      */
     void clearBMCStateCallback(const std::string& name)
+    {
+        bmcStateCBs.erase(name);
+    }
+
+    /**
+     * @brief Clears the heartbeat callback
+     *
+     * @param[in] name - The name to clear
+     */
+    void clearHeartbeatCallback(const std::string& name)
     {
         bmcStateCBs.erase(name);
     }
@@ -184,6 +196,18 @@ class Sibling
         bmcStateCBs.emplace(name, std::move(callback));
     }
 
+    /**
+     * @brief Adds a callback function to invoke when the sibling's
+     *        Heartbeat property changes
+     *
+     * @param[in] name - A name to register with
+     * @param[in] callback - The callback function
+     */
+    void addHeartbeatCallback(std::string_view name, HeartbeatCallback callback)
+    {
+        heartbeatCBs.emplace(name, std::move(callback));
+    }
+
   protected:
     /**
      * @brief Callbacks for RedundancyEnabled
@@ -194,5 +218,10 @@ class Sibling
      * @brief Callbacks for BMCState
      */
     std::map<std::string, BMCStateCallback> bmcStateCBs;
+
+    /**
+     * @brief Callbacks for Heartbeat
+     */
+    std::map<std::string, HeartbeatCallback> heartbeatCBs;
 };
 } // namespace rbmc

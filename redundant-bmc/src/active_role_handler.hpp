@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
+#include "health_monitor.hpp"
 #include "redundancy_mgr.hpp"
 #include "role_handler.hpp"
 
@@ -29,10 +30,7 @@ class ActiveRoleHandler : public RoleHandler
      * @param[in] iface - The redundancy D-Bus interface object
      */
     ActiveRoleHandler(sdbusplus::async::context& ctx, Services& services,
-                      Sibling& sibling, RedundancyInterface& iface) :
-        RoleHandler(ctx, services, sibling, iface),
-        redMgr(ctx, services, sibling, iface)
-    {}
+                      Sibling& sibling, RedundancyInterface& iface);
 
     /**
      * @brief Destructor
@@ -70,6 +68,8 @@ class ActiveRoleHandler : public RoleHandler
         sibling.addBMCStateCallback(
             "active",
             std::bind_front(&ActiveRoleHandler::siblingStateChange, this));
+
+        siblingHBMon.startMonitor(sibling.hasHeartbeat());
     }
 
     /**
@@ -78,6 +78,7 @@ class ActiveRoleHandler : public RoleHandler
     inline void stopSiblingWatches()
     {
         sibling.clearBMCStateCallback("active");
+        siblingHBMon.stopMonitor();
     }
 
     using BMCState =
@@ -92,9 +93,44 @@ class ActiveRoleHandler : public RoleHandler
     void siblingStateChange(BMCState state);
 
     /**
+     * @brief Called by the HealthMonitor on sibling heartbeat
+     *        events (good, warning, critical).
+     */
+    sdbusplus::async::task<> siblingHBEvent(HealthMonitor::State state);
+
+    /**
+     * @brief Called by the HealthMonitor (via siblingHBEvent: good)
+     *        when the sibling BMC's heartbeat starts back up.
+     *
+     * This will attempt to re-enable redundancy, though it might
+     * not be possible for other reasons.
+     */
+    sdbusplus::async::task<> siblingHBStarted();
+
+    /**
+     * @brief Called by the HealthMonitor (via siblingHBEvent: warning)
+     *        when it detects the sibling BMC's heartbeat first stopped.
+     *
+     * This will cause failoversPaused to be asserted.
+     */
+    sdbusplus::async::task<> siblingHBWarning();
+
+    /**
+     * @brief Called by the HealthMonitor (via siblingHBEvent: critical)
+     *        when it detects the sibling heartbeat has been stopped
+     *        long enough that redundancy will need to be disabled.
+     */
+    sdbusplus::async::task<> siblingHBCritical();
+
+    /**
      * @brief Redundancy manager object
      */
     RedundancyMgr redMgr;
+
+    /**
+     * @brief Sibling heartbeat monitor
+     */
+    HealthMonitor siblingHBMon;
 };
 
 } // namespace rbmc
