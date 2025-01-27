@@ -54,7 +54,6 @@ Manager::Manager(sdbusplus::async::context& ctx,
     ctx.spawn(startup());
 }
 
-// clang-tidy currently mangles this into something unreadable
 // NOLINTNEXTLINE
 sdbusplus::async::task<> Manager::startup()
 {
@@ -80,13 +79,20 @@ sdbusplus::async::task<> Manager::startup()
         {
             co_await sibling.waitForSiblingUp();
 
-            if (previousRole == Role::Passive)
+            // Sibling service may have died.  Check again.
+            if (!sibling.getInterfacePresent())
+            {
+                passiveRoleInfo = co_await determinePassiveRoleIfRequired();
+            }
+
+            // If passive previously, let sibling go first.
+            if (!passiveRoleInfo && (previousRole == Role::Passive))
             {
                 co_await sibling.waitForSiblingRole();
             }
         }
 
-        updateRole(determineRole());
+        updateRole(passiveRoleInfo.value_or(determineRole()));
     }
 
     spawnRoleHandler();
@@ -126,7 +132,6 @@ void Manager::startHeartbeat()
     ctx.spawn(doHeartBeat());
 }
 
-// clang-tidy currently mangles this into something unreadable
 // NOLINTNEXTLINE
 sdbusplus::async::task<> Manager::doHeartBeat()
 {
