@@ -15,7 +15,13 @@ NoRedundancyReasons getNoRedundancyReasons(const Input& input)
 
     // TODO:
     // - Network and/or sync health
-    // - Can't enable redundancy if system wasn't booted with it enabled
+
+    if (input.failoverInProgress)
+    {
+        reasons.insert(failoverInProgress);
+        // Don't bother checking other reasons
+        return reasons;
+    }
 
     if (input.role != Role::Active)
     {
@@ -118,6 +124,9 @@ std::string getNoRedundancyDescription(NoRedundancyReason reason)
             break;
         case syncFailed:
             desc = "Data sync failed"s;
+            break;
+        case failoverInProgress:
+            desc = "Failover in progress"s;
             break;
         case other:
             desc = "Other";

@@ -74,6 +74,19 @@ class RedundancyMgr
      */
     void handleBackgroundSyncFailed();
 
+    /**
+     * @brief Called to disable redundancy when a failover is in progress
+     */
+    void disableRedundancyDueToFailover();
+
+    /**
+     * @brief Clears the failover in progress indication
+     */
+    void clearFailoverInProgress()
+    {
+        failoverInProgress = false;
+    }
+
   private:
     /**
      * @brief Returns the reasons that redundancy cannnot be
@@ -196,6 +209,13 @@ class RedundancyMgr
      * @brief If data sync is in a failed state.
      */
     bool syncFailed = false;
+
+    /**
+     * @brief Status on if a failover is in progress
+     *
+     * If true, redundancy can't be enabled.
+     */
+    bool failoverInProgress = false;
 };
 
 } // namespace rbmc

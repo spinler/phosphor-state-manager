@@ -20,7 +20,8 @@ TEST(RedundancyTest, NoRedundancyReasonsTest)
         .codeVersionsMatch = true,
         .manualDisable = false,
         .redundancyOffAtRuntimeStart = false,
-        .syncFailed = false};
+        .syncFailed = false,
+        .failoverInProgress = false};
 
     // Nothing stopping redundancy
     {
@@ -126,6 +127,17 @@ TEST(RedundancyTest, NoRedundancyReasonsTest)
         auto reasons = getNoRedundancyReasons(input);
         ASSERT_EQ(reasons.size(), 1);
         EXPECT_EQ(*reasons.begin(), syncFailed);
+    }
+
+    // Failover in progress.
+    {
+        auto input = golden;
+        input.failoverInProgress = true;
+
+        // It is always reported by itself
+        auto reasons = getNoRedundancyReasons(input);
+        ASSERT_EQ(reasons.size(), 1);
+        EXPECT_EQ(*reasons.begin(), failoverInProgress);
     }
 
     // Multiple fails

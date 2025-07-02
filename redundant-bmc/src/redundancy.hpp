@@ -32,6 +32,7 @@ struct Input
     bool manualDisable;
     bool redundancyOffAtRuntimeStart;
     bool syncFailed;
+    bool failoverInProgress;
 };
 
 // TODO: Move this to PDI Enums
@@ -52,6 +53,7 @@ enum class NoRedundancyReason
     systemHardwareConfigIssue,
     redundancyOffAtRuntimeStart,
     syncFailed,
+    failoverInProgress,
     other
 };
 

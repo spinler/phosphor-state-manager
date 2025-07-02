@@ -115,7 +115,8 @@ redundancy::NoRedundancyReasons RedundancyMgr::getNoRedundancyReasons()
             services.getFWVersion() == sibling.getFWVersion().value_or(""),
         .manualDisable = manualDisable,
         .redundancyOffAtRuntimeStart = isRedundancyOffAtRuntime(),
-        .syncFailed = syncFailed};
+        .syncFailed = syncFailed,
+        .failoverInProgress = failoverInProgress};
 
     auto reasons = redundancy::getNoRedundancyReasons(input);
 
@@ -329,6 +330,12 @@ void RedundancyMgr::determineAndSetFailoversAllowed()
         // Already traced above.
         redundancyInterface.failovers_allowed(false);
     }
+}
+
+void RedundancyMgr::disableRedundancyDueToFailover()
+{
+    failoverInProgress = true;
+    determineAndSetRedundancy();
 }
 
 } // namespace rbmc
