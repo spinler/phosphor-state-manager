@@ -26,6 +26,7 @@ unit_files = [
     'phosphor-set-chassis-transition-to-on@.service',
     'phosphor-set-chassis-transition-to-off@.service',
     'phosphor-bmc-quiesce-reboot.service',
+    'phosphor-wait-for-active-passive-target.service',
 ]
 
 # Add SMP-specific service file when multi-chassis SMP is enabled
