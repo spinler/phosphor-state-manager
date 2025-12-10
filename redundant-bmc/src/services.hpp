@@ -177,6 +177,8 @@ class Services
      */
     virtual sdbusplus::async::task<bool> checkSystemInventoryStatus() = 0;
 
+    virtual sdbusplus::async::task<> acquireHardwareAccess() = 0;
+
   protected:
     /**
      * @brief The functions to call when the system state changes

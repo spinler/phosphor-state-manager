@@ -135,6 +135,8 @@ class ServicesImpl : public Services
      */
     sdbusplus::async::task<bool> checkSystemInventoryStatus() override;
 
+    sdbusplus::async::task<> acquireHardwareAccess() override;
+
   private:
     /**
      * @brief Returns the D-Bus object path for the unit in the

@@ -17,6 +17,17 @@ sdbusplus::async::task<> ActiveRoleHandler::start()
 
     try
     {
+        lg2::info("Acquiring hardware access");
+        co_await services.acquireHardwareAccess();
+    }
+    catch (const std::exception& e)
+    {
+        // TODO: Create error log
+        lg2::error("Failed acquiring hardware access: {ERROR}", "ERROR", e);
+    }
+
+    try
+    {
         // NOLINTNEXTLINE
         co_await services.startUnit(bmcActiveTarget);
     }
@@ -167,6 +178,18 @@ auto ActiveRoleHandler::getFailoverBlockedReason(
 // NOLINTNEXTLINE
 sdbusplus::async::task<> ActiveRoleHandler::failoverStartActiveTarget()
 {
+    try
+    {
+        lg2::info("Acquiring hardware access");
+        co_await providers.getServices().acquireHardwareAccess();
+    }
+    catch (const std::exception& e)
+    {
+        // TODO: Create error log
+        lg2::error("Failed acquiring hardware access during failover: {ERROR}",
+                   "ERROR", e);
+    }
+
     try
     {
         co_await providers.getServices().startUnit(bmcActiveTarget);
