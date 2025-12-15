@@ -528,6 +528,13 @@ bool ServicesImpl::getProvisioned() const
 
 std::string ServicesImpl::getFWVersion() const
 {
+    static std::string hexVersionString;
+
+    if (!hexVersionString.empty())
+    {
+        return hexVersionString;
+    }
+
     std::ifstream versionFile{"/etc/os-release"};
     std::string line;
     std::string keyPattern{"VERSION_ID="};
@@ -565,8 +572,9 @@ std::string ServicesImpl::getFWVersion() const
     EVP_DigestUpdate(context.get(), version.c_str(), strlen(version.c_str()));
     EVP_DigestFinal(context.get(), digest.data(), nullptr);
 
-    return std::format("{:02X}{:02X}{:02X}{:02X}", digest[0], digest[1],
-                       digest[2], digest[3]);
+    hexVersionString = std::format("{:02X}{:02X}{:02X}{:02X}", digest[0],
+                                   digest[1], digest[2], digest[3]);
+    return hexVersionString;
 }
 
 SystemState ServicesImpl::getSystemState() const
