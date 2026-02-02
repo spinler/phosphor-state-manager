@@ -20,4 +20,15 @@ namespace rbmc::errors
 void addDefaultData(const RedundancyInterface& iface, Providers& providers,
                     AdditionalData& data);
 
+using FailoverOptions = std::map<std::string, std::variant<bool>>;
+
+/**
+ * @brief Adds the failover options keys and values to the
+ *        additional data map.
+ *
+ * Of the form: "FOOpt:<key>  ->  <value>"
+ */
+void addFailoverOptsToData(const FailoverOptions& options,
+                           errors::AdditionalData& data);
+
 } // namespace rbmc::errors

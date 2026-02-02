@@ -127,6 +127,18 @@ class Manager :
     sdbusplus::async::task<> postStartupClearFOInProgress();
 
     /**
+     * @brief Checks if a failover can be started now.
+     *
+     * @param[in] options - The options passed to StartFailover
+     *
+     * @return std::string - The reason for the failover rejection
+     *                       or empty string if it can proceed.
+     *
+     */
+    sdbusplus::async::task<fo_blocked::Reason> validateFailoverRequest(
+        const FailoverOptions& options);
+
+    /**
      * @brief The async context object
      */
     sdbusplus::async::context& ctx;
