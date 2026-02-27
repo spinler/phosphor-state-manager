@@ -19,6 +19,6 @@ test(
             phosphordbusinterfaces,
             phosphorlogging,
         ],
-        include_directories: '../src',
+        include_directories: ['../src', '.'],
     ),
 )
