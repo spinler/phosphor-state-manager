@@ -53,6 +53,7 @@ constexpr auto noRedReasons = "NoRedundancyReasons";
 constexpr auto disableRed = "DisableRedundancy";
 constexpr auto redundancyOffAtRuntime = "RedundancyOffAtRuntime";
 constexpr auto failoverInProgress = "FailoverInProgress";
+constexpr auto trackedWaits = "TrackedWaits";
 } // namespace key
 
 namespace util
