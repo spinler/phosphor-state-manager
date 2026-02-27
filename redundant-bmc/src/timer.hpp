@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
+#include "wait_tracker.hpp"
+
 #include <sdbusplus/async.hpp>
 
 namespace rbmc
@@ -20,10 +22,12 @@ class Timer :
      * @brief Constructor
      *
      * @param[in] ctx - The async context object
+     * @param[in] wait - The wait type for this timer.
      * @param[in] callback - Function to call on expiration
      */
-    Timer(sdbusplus::async::context& ctx, std::function<void()>&& callback) :
-        context_ref(ctx), callback(std::move(callback))
+    Timer(sdbusplus::async::context& ctx, Wait wait,
+          std::function<void()>&& callback) :
+        context_ref(ctx), wait(wait), callback(std::move(callback))
     {}
 
     /**
@@ -34,6 +38,7 @@ class Timer :
                        [[maybe_unused]] uint64_t usec, void* userdata)
     {
         Timer* t = static_cast<Timer*>(userdata);
+        removeTrackedWait(t->wait);
         t->callback();
         t->source.reset();
         return 0;
@@ -46,6 +51,7 @@ class Timer :
      */
     void start(const std::chrono::microseconds& timeout)
     {
+        addTrackedWait(wait);
         source.reset();
 
         auto s = get_event_loop(ctx).add_oneshot_timer(Timer::handler, this,
@@ -58,6 +64,7 @@ class Timer :
      */
     void stop()
     {
+        removeTrackedWait(wait);
         source.reset();
     }
 
@@ -72,6 +79,11 @@ class Timer :
       private:
         sdbusplus::event::source source;
     };
+
+    /**
+     * The wait type for this timer.
+     */
+    Wait wait;
 
     /**
      * @brief Function to run on timeout

@@ -6,6 +6,7 @@
 #include "errors.hpp"
 #include "passive_role_handler.hpp"
 #include "persistent_data.hpp"
+#include "wait_tracker.hpp"
 
 #include <phosphor-logging/lg2.hpp>
 #include <xyz/openbmc_project/Common/error.hpp>
@@ -49,6 +50,8 @@ Manager::Manager(sdbusplus::async::context& ctx,
         lg2::error("Failed trying to obtain previous role error: {ERROR}",
                    "ERROR", e);
     }
+
+    removeAllTrackedWaits();
 
     // emit the Failover interfaces added signal
     emit_added();

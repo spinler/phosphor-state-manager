@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#include "wait_tracker.hpp"
+
 #include <phosphor-logging/lg2.hpp>
 #include <sync_interface_impl.hpp>
 #include <xyz/openbmc_project/ObjectMapper/client.hpp>
@@ -51,6 +53,8 @@ sdbusplus::async::task<bool> SyncInterfaceImpl::doFullSync()
                                           SyncBMCData::interface));
 
         status = co_await sync.full_sync_status();
+
+        ScopeWaitTracker wait{Wait::fullSync};
 
         while ((status == SyncStatus::FullSyncInProgress) &&
                !ctx.stop_requested())

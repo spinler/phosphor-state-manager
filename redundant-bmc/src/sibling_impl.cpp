@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "sibling_impl.hpp"
 
+#include "wait_tracker.hpp"
+
 #include <phosphor-logging/lg2.hpp>
 #include <xyz/openbmc_project/ObjectMapper/client.hpp>
 #include <xyz/openbmc_project/Software/Version/common.hpp>
@@ -396,6 +398,8 @@ sdbusplus::async::task<> SiblingImpl::waitForSiblingUp()
     std::chrono::minutes timeout{6};
     auto waiting = false;
 
+    ScopeWaitTracker wait{Wait::siblingAlive};
+
     while (!alive() && ((std::chrono::steady_clock::now() - start) < timeout))
     {
         if (!waiting)
@@ -430,6 +434,8 @@ sdbusplus::async::task<> SiblingImpl::waitForSiblingRole()
 
     auto start = std::chrono::steady_clock::now();
 
+    ScopeWaitTracker wait{Wait::siblingRole};
+
     while (noRole() && ((std::chrono::steady_clock::now() - start) < timeout))
     {
         if (!waiting)
@@ -461,6 +467,8 @@ sdbusplus::async::task<> SiblingImpl::waitForBMCSteadyState() const
     auto steadyState = [](BMCState state) {
         return (state == BMCState::Ready) || (state == BMCState::Quiesced);
     };
+
+    ScopeWaitTracker wait{Wait::siblingBMCSteadyState};
 
     while (!steadyState(bmcState.state) &&
            ((std::chrono::steady_clock::now() - start) < timeout))

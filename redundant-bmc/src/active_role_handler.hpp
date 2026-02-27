@@ -4,6 +4,7 @@
 #include "redundancy_mgr.hpp"
 #include "role_handler.hpp"
 #include "timer.hpp"
+#include "wait_tracker.hpp"
 
 namespace rbmc
 {
@@ -32,7 +33,7 @@ class ActiveRoleHandler : public RoleHandler
                       RedundancyInterface& iface) :
         RoleHandler(ctx, providers, iface), redMgr(ctx, providers, iface),
         siblingHealthTimer(
-            ctx,
+            ctx, Wait::siblingHealth,
             std::bind_front(&ActiveRoleHandler::siblingHealthCritical, this))
     {}
 

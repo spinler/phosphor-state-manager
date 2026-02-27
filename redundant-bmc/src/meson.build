@@ -30,6 +30,7 @@ executable(
     'sibling_impl.cpp',
     'sibling_reset_impl.cpp',
     'sync_interface_impl.cpp',
+    'wait_tracker.cpp',
     dependencies: rbmc_deps,
     install: true,
     install_dir: execinstalldir,
@@ -41,6 +42,7 @@ executable(
     'rbmc_tool.cpp',
     'services_impl.cpp',
     'sibling_reset_impl.cpp',
+    'wait_tracker.cpp',
     dependencies: [rbmc_deps, CLI11],
     install: true,
 )

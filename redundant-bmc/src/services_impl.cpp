@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 #include "services_impl.hpp"
 
+#include "wait_tracker.hpp"
+
 #include <openssl/evp.h>
 
 #include <phosphor-logging/lg2.hpp>
@@ -540,6 +542,8 @@ sdbusplus::async::task<> ServicesImpl::startUnit(
     std::string state;
     auto end = std::chrono::steady_clock::now() + timeout;
 
+    ScopeWaitTracker wait{Wait::startUnit};
+
     while ((state != "active") && (state != "failed"))
     {
         if (std::chrono::steady_clock::now() > end)
@@ -650,6 +654,9 @@ auto ServicesImpl::getBMCState() const -> sdbusplus::async::task<
 sdbusplus::async::task<> ServicesImpl::doFailoverImminentDelay() const
 {
     lg2::info("Delaying for 10s for failover imminent notification");
+
+    ScopeWaitTracker wait{Wait::failoverImminent};
+
     // NOLINTNEXTLINE(clang-analyzer-core.uninitialized.Branch)
     co_await sdbusplus::async::sleep_for(ctx, std::chrono::seconds{10});
 }
@@ -674,6 +681,8 @@ sdbusplus::async::task<> ServicesImpl::waitForSystemInventoryPath()
     using namespace std::chrono_literals;
     auto end = std::chrono::steady_clock::now() + 3min;
     bool traced = false;
+
+    ScopeWaitTracker wait{Wait::systemInventoryPath};
 
     while (std::chrono::steady_clock::now() < end)
     {
@@ -718,6 +727,8 @@ sdbusplus::async::task<bool> ServicesImpl::checkSystemInventoryStatus()
 
     using namespace std::chrono_literals;
     auto end = std::chrono::steady_clock::now() + 3min;
+
+    ScopeWaitTracker wait{Wait::systemInventoryStatus};
 
     while (std::chrono::steady_clock::now() < end)
     {

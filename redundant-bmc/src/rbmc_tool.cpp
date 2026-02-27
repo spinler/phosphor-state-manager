@@ -5,6 +5,7 @@
 #include "services_impl.hpp"
 #include "sibling_reset_impl.hpp"
 #include "types.hpp"
+#include "wait_tracker.hpp"
 
 #include <CLI/CLI.hpp>
 #include <nlohmann/json.hpp>
@@ -159,6 +160,17 @@ void addLastFailoverDetails(const std::filesystem::path& dataPath,
     }
 }
 
+void addTrackedWaits(nlohmann::ordered_json& output)
+{
+    auto waits = rbmc::getTrackedWaits();
+    if (waits.empty())
+    {
+        return;
+    }
+
+    output["Current Waits"] = std::move(waits);
+}
+
 // NOLINTNEXTLINE
 sdbusplus::async::task<> getLocalBMCInfo(sdbusplus::async::context& ctx,
                                          bool extended,
@@ -219,6 +231,8 @@ sdbusplus::async::task<> getLocalBMCInfo(sdbusplus::async::context& ctx,
         {
             addFONotAllowedReason(props.failovers_not_allowed_reason, output);
         }
+
+        addTrackedWaits(output);
 
         if ((role == "Active") && pos.has_value())
         {
