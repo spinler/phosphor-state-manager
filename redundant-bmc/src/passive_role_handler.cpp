@@ -222,7 +222,6 @@ sdbusplus::async::task<> PassiveRoleHandler::startSync()
     {
         lg2::error("Full sync on passive BMC failed");
         co_await stopSync();
-        // TODO: create error log
     }
 }
 
@@ -270,7 +269,6 @@ sdbusplus::async::task<> PassiveRoleHandler::syncHealthCritical()
     if (providers.getSibling().alive())
     {
         lg2::error("Sync fail was not caused by a sibling BMC problem");
-        // TODO: Create error log
     }
     else
     {
@@ -324,6 +322,8 @@ auto PassiveRoleHandler::getFailoverBlockedReason(
         .state = bmcState,
         .failoversNotAllowed = !redundancyInterface.failovers_allowed(),
         .forceOption = force,
+        .failoverInProgress = redundancyInterface.failover_in_progress() ||
+                              redundancyInterface.failover_imminent(),
 
         // If the active BMC were to completely die, its last known value of
         // RedundancyEnabled will still have been mirrored to the passive.
