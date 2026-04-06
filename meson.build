@@ -67,6 +67,12 @@ conf.set(
     get_option('check-fwupdate-before-do-transition').allowed(),
 )
 
+conf.set10('ENABLE_MULTI_CHASSIS_SMP', get_option('multi-chassis-smp').allowed())
+
+if (get_option('multi-chassis-smp').allowed())
+    conf.set('NUM_CHASSIS_SMP', get_option('num-chassis-smp'))
+endif
+
 configure_file(output: 'config.h', configuration: conf)
 
 if (get_option('warm-reboot').allowed())
@@ -150,11 +156,20 @@ executable(
     install: true,
 )
 
-executable(
-    'phosphor-chassis-state-manager',
+# Build chassis state manager with optional multi-chassis SMP support
+chassis_sources = [
     'chassis_state_manager.cpp',
     'chassis_state_manager_main.cpp',
     'utils.cpp',
+]
+
+if get_option('multi-chassis-smp').allowed()
+    chassis_sources += 'chassis_state_manager_smp.cpp'
+endif
+
+executable(
+    'phosphor-chassis-state-manager',
+    chassis_sources,
     dependencies: [
         cereal,
         libgpiod,
