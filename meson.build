@@ -270,6 +270,22 @@ install_data(
     install_dir: get_option('bindir'),
 )
 
+# Build SMP chassis wait service only when multi-chassis SMP is enabled
+if get_option('multi-chassis-smp').allowed()
+    executable(
+        'phosphor-chassis-wait-for-smp-poweron',
+        'chassis_wait_for_smp_poweron.cpp',
+        dependencies: [
+            phosphordbusinterfaces,
+            phosphorlogging,
+            sdbusplus,
+            sdeventplus,
+        ],
+        implicit_include_directories: true,
+        install: true,
+    )
+endif
+
 install_data(
     'scripts/host-reboot',
     install_mode: 'rwxr-xr-x',
