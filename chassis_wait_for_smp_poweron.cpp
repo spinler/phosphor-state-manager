@@ -86,8 +86,9 @@ bool SMPChassisWaiter::isChassisPresent(size_t chassisId)
 
     try
     {
-        auto method = bus.new_method_call(inventoryBusName, inventoryPath.str,
-                                          PROPERTY_INTERFACE, "Get");
+        auto method =
+            bus.new_method_call(inventoryBusName, inventoryPath.str.c_str(),
+                                PROPERTY_INTERFACE, "Get");
         method.append(INVENTORY_INTERFACE, "Present");
 
         auto response = bus.call(method);
@@ -114,8 +115,9 @@ void SMPChassisWaiter::updateChassisPowerState(size_t chassisId)
 
     try
     {
-        auto method = bus.new_method_call(
-            chassisService.c_str(), chassisPath.str, PROPERTY_INTERFACE, "Get");
+        auto method =
+            bus.new_method_call(chassisService.c_str(), chassisPath.str.c_str(),
+                                PROPERTY_INTERFACE, "Get");
         method.append(CHASSIS_INTERFACE, "CurrentPowerState");
 
         auto reply = bus.call(method);

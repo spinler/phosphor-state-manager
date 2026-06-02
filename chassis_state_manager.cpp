@@ -106,9 +106,9 @@ void Chassis::determineInitialState()
     std::variant<int> pgood = -1;
     sdbusplus::object_path powerControlPath =
         std::format("/org/openbmc/control/power{}", id);
-    auto method =
-        this->bus.new_method_call("org.openbmc.control.Power", powerControlPath,
-                                  PROPERTY_INTERFACE, "Get");
+    auto method = this->bus.new_method_call(
+        "org.openbmc.control.Power", powerControlPath.str.c_str(),
+        PROPERTY_INTERFACE, "Get");
 
     method.append("org.openbmc.control.Power", "pgood");
     try
@@ -636,8 +636,8 @@ Chassis::Transition Chassis::requestedPowerTransition(Transition value)
     if ((value != Transition::Off) && (!utils::isBmcReady(this->bus)))
     {
         info("Chassis{CHASSIS_ID}: BMC State is not Ready so no chassis on "
-                 "operations allowed",
-                 "CHASSIS_ID", id);
+             "operations allowed",
+             "CHASSIS_ID", id);
         throw sdbusplus::xyz::openbmc_project::State::Chassis::Error::
             BMCNotReady();
     }
@@ -651,8 +651,8 @@ Chassis::Transition Chassis::requestedPowerTransition(Transition value)
         (phosphor::state::manager::utils::isFirmwareUpdating(this->bus)))
     {
         info("Chassis{CHASSIS_ID}: Firmware being updated, reject the "
-                 "transition request",
-                 "CHASSIS_ID", id);
+             "transition request",
+             "CHASSIS_ID", id);
         throw sdbusplus::xyz::openbmc_project::Common::Error::Unavailable();
     }
 #endif // CHECK_FWUPDATE_BEFORE_DO_TRANSITION

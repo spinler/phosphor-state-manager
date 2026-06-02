@@ -45,8 +45,9 @@ constexpr auto CHASSIS_SERVICE = "xyz.openbmc_project.State.Chassis{}";
 ChassisSMP::ChassisSMP(sdbusplus::bus_t& bus,
                        const sdbusplus::object_path& objPath,
                        size_t numChassis) :
-    ChassisInherit(bus, objPath, ChassisInherit::action::defer_emit), bus(bus),
-    numChassis(numChassis)
+    ChassisInherit(bus, objPath.str.c_str(),
+                   ChassisInherit::action::defer_emit),
+    bus(bus), numChassis(numChassis)
 {
     if (numChassis == 0)
     {
@@ -169,13 +170,14 @@ void ChassisSMP::aggregatePowerState()
         std::string chassisService = std::format(CHASSIS_SERVICE, i);
         try
         {
-            auto method = bus.new_method_call(
-                chassisService.c_str(), chassisPath, PROPERTY_INTERFACE, "Get");
-            method.append(server::Chassis::interface,
-                          server::Chassis::property_names::current_power_state);
+            auto method = bus.new_method_call(chassisService.c_str(),
+                                              chassisPath.str.c_str(),
+                                              PROPERTY_INTERFACE, "Get");
+            method.append(server::Chassis::interface, "CurrentPowerState");
 
             auto reply = bus.call(method);
-            auto propertyValue = reply.unpack<std::variant<PowerState>>();
+            std::variant<PowerState> propertyValue;
+            reply.read(propertyValue);
             auto state = std::get<PowerState>(propertyValue);
 
             chassisPowerStates[i] = state;
@@ -248,14 +250,14 @@ void ChassisSMP::aggregatePowerStatus()
 
         try
         {
-            auto method = bus.new_method_call(
-                chassisService.c_str(), chassisPath, PROPERTY_INTERFACE, "Get");
-            method.append(
-                server::Chassis::interface,
-                server::Chassis::property_names::current_power_status);
+            auto method = bus.new_method_call(chassisService.c_str(),
+                                              chassisPath.str.c_str(),
+                                              PROPERTY_INTERFACE, "Get");
+            method.append(server::Chassis::interface, "CurrentPowerStatus");
 
             auto reply = bus.call(method);
-            auto propertyValue = reply.unpack<std::variant<PowerStatus>>();
+            std::variant<PowerStatus> propertyValue;
+            reply.read(propertyValue);
             auto status = std::get<PowerStatus>(propertyValue);
 
             chassisPowerStatus[i] = status;
@@ -300,7 +302,7 @@ void ChassisSMP::chassisPropertyChanged(sdbusplus::message_t& msg,
 
     for (const auto& [property, value] : properties)
     {
-        if (property == server::Chassis::property_names::current_power_state)
+        if (property == "CurrentPowerState")
         {
             auto stateStr = std::get<std::string>(value);
             PowerState state =
@@ -342,8 +344,7 @@ void ChassisSMP::chassisPropertyChanged(sdbusplus::message_t& msg,
             chassisPowerStates[chassisId] = state;
             aggregatePowerState();
         }
-        else if (property ==
-                 server::Chassis::property_names::current_power_status)
+        else if (property == "CurrentPowerStatus")
         {
             auto statusStr = std::get<std::string>(value);
             PowerStatus status =
@@ -378,12 +379,12 @@ void ChassisSMP::requestTransitionOnAllChassis(Transition transition)
         {
             std::string transitionStr = convertForMessage(transition);
 
-            auto method = bus.new_method_call(
-                chassisService.c_str(), chassisPath, PROPERTY_INTERFACE, "Set");
-            method.append(
-                server::Chassis::interface,
-                server::Chassis::property_names::requested_power_transition,
-                std::variant<std::string>(transitionStr));
+            auto method = bus.new_method_call(chassisService.c_str(),
+                                              chassisPath.str.c_str(),
+                                              PROPERTY_INTERFACE, "Set");
+            method.append(server::Chassis::interface,
+                          "RequestedPowerTransition",
+                          std::variant<std::string>(transitionStr));
 
             bus.call_noreply(method);
 
@@ -449,10 +450,10 @@ bool ChassisSMP::isChassisPresent(size_t chassisId)
 
     try
     {
-        auto method = bus.new_method_call(inventoryBusName, inventoryPath.str,
-                                          PROPERTY_INTERFACE, "Get");
-        method.append(InventoryItem::interface,
-                      InventoryItem::property_names::present);
+        auto method =
+            bus.new_method_call(inventoryBusName, inventoryPath.str.c_str(),
+                                PROPERTY_INTERFACE, "Get");
+        method.append(InventoryItem::interface, "Present");
 
         auto response = bus.call(method);
         std::variant<bool> value;
@@ -481,7 +482,7 @@ void ChassisSMP::inventoryPresentChanged(sdbusplus::message_t& msg,
 
     msg.read(interface, properties);
 
-    auto present = properties.find(InventoryItem::property_names::present);
+    auto present = properties.find("Present");
     if (present == properties.end())
     {
         return;
