@@ -93,9 +93,9 @@ void Chassis::determineInitialState()
     std::variant<int> pgood = -1;
     sdbusplus::object_path powerControlPath =
         std::format("/org/openbmc/control/power{}", id);
-    auto method =
-        this->bus.new_method_call("org.openbmc.control.Power", powerControlPath,
-                                  PROPERTY_INTERFACE, "Get");
+    auto method = this->bus.new_method_call(
+        "org.openbmc.control.Power", powerControlPath.str.c_str(),
+        PROPERTY_INTERFACE, "Get");
 
     method.append("org.openbmc.control.Power", "pgood");
     try
@@ -644,6 +644,7 @@ Chassis::Transition Chassis::requestedPowerTransition(Transition value)
 
     if constexpr (CHECK_FWUPDATE_BEFORE_DO_TRANSITION)
     {
+<<<<<<< HEAD
         /*
          * Do not do transition when the any firmware being updated
          */
