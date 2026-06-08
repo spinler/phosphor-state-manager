@@ -9,7 +9,7 @@ Conflicts=obmc-chassis-poweroff@0.target
 [Service]
 Type=oneshot
 RemainAfterExit=no
-ExecStart=/usr/bin/phosphor-chassis-wait-for-smp-poweron
+ExecStart=/usr/libexec/phosphor-state-manager/phosphor-chassis-wait-for-smp-poweron
 
 [Install]
 RequiredBy=obmc-chassis-poweron@0.target
