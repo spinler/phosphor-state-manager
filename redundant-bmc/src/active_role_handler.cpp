@@ -75,6 +75,8 @@ sdbusplus::async::task<> ActiveRoleHandler::start()
     co_await redMgr.determineRedundancyAndSync();
 
     startAllWatches();
+
+    providers.getTracker().track(ProgressPoint::activeHandlerStartComplete);
 }
 
 void ActiveRoleHandler::siblingStateChange(BMCState state)
