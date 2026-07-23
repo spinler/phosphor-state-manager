@@ -224,7 +224,7 @@ void SystemdTargetLogging::initImmediateQuiesceMonitoring()
         sdbusplus::object_path unitPath;
         try
         {
-            unitPath = this->bus.call(method).unpack<sdbusplus::object_path>();
+            this->bus.call(method).read(unitPath);
         }
         catch (const sdbusplus::exception_t& e)
         {
@@ -237,7 +237,7 @@ void SystemdTargetLogging::initImmediateQuiesceMonitoring()
         // Install a PropertiesChanged match on this unit's
         // org.freedesktop.systemd1.Unit interface
         auto matchRule = sdbusplus::match_rules::propertiesChanged(
-            unitPath.string(), SYSTEMD_UNIT_INTERFACE);
+            unitPath.str, SYSTEMD_UNIT_INTERFACE);
 
         this->immediateQuiesceMatches.emplace_back(
             this->bus, matchRule,
@@ -250,14 +250,14 @@ void SystemdTargetLogging::initImmediateQuiesceMonitoring()
         // This closes the race where a service crashes before our match
         // is in place -- the PropertiesChanged signal would have been
         // missed, but the state is already "failed".
-        auto getMethod = this->bus.new_method_call(SYSTEMD_SERVICE, unitPath,
+        auto getMethod = this->bus.new_method_call(SYSTEMD_SERVICE, unitPath.str.c_str(),
                                                    PROPERTY_INTERFACE, "Get");
         getMethod.append(SYSTEMD_UNIT_INTERFACE, "ActiveState");
 
         try
         {
-            auto currentState =
-                this->bus.call(getMethod).unpack<std::variant<std::string>>();
+            std::variant<std::string> currentState;
+            this->bus.call(getMethod).read(currentState);
             const auto* stateStr = std::get_if<std::string>(&currentState);
             if (stateStr != nullptr && *stateStr == "failed")
             {

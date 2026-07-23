@@ -41,14 +41,14 @@ constexpr auto CHASSIS_SERVICE = "xyz.openbmc_project.State.Chassis{}";
 ChassisSMP::ChassisSMP(sdbusplus::bus_t& bus,
                        const sdbusplus::object_path& objPath,
                        size_t numChassis) :
-    ChassisInherit(bus, objPath, ChassisInherit::action::defer_emit), bus(bus),
+    ChassisInherit(bus, objPath.str.c_str(), ChassisInherit::action::defer_emit), bus(bus),
     numChassis(numChassis),
-    systemdSignalJobNew(
+    systemdSignalJobNew(std::make_unique<sdbusplus::bus::match_t>(
         bus,
         sdbusRule::type::signal() + sdbusRule::member("JobNew") +
             sdbusRule::path("/org/freedesktop/systemd1") +
             sdbusRule::interface("org.freedesktop.systemd1.Manager"),
-        [this](sdbusplus::message_t& m) { sysStateChangeJobNew(m); })
+        [this](sdbusplus::message_t& m) { sysStateChangeJobNew(m); }))
 {
     if (numChassis == 0)
     {
@@ -112,7 +112,7 @@ void ChassisSMP::startMonitoring()
 
         auto inventoryMatch = std::make_unique<sdbusplus::match>(
             bus,
-            sdbusRule::propertiesChanged(inventoryPath.string(),
+            sdbusRule::propertiesChanged(inventoryPath.str,
                                          "xyz.openbmc_project.Inventory.Item"),
             [this, i](sdbusplus::message_t& msg) {
                 this->inventoryPresentChanged(msg, i);
@@ -136,7 +136,7 @@ void ChassisSMP::startMonitoring()
 
         auto match = std::make_unique<sdbusplus::match>(
             bus,
-            sdbusRule::propertiesChanged(chassisPath.string(),
+            sdbusRule::propertiesChanged(chassisPath.str,
                                          server::Chassis::interface),
             [this, i](sdbusplus::message_t& msg) {
                 this->chassisPropertyChanged(msg, i);
@@ -457,10 +457,10 @@ bool ChassisSMP::isChassisPresent(size_t chassisId)
 
     try
     {
-        auto method = bus.new_method_call(inventoryBusName, inventoryPath,
+        auto method = bus.new_method_call(inventoryBusName, inventoryPath.str.c_str(),
                                           PROPERTY_INTERFACE, "Get");
         method.append(InventoryItem::interface,
-                      InventoryItem::property_names::present);
+                      "Present");
 
         auto response = bus.call(method);
         std::variant<bool> value;
@@ -516,7 +516,7 @@ void ChassisSMP::inventoryPresentChanged(sdbusplus::message_t& msg,
             auto match = std::make_unique<sdbusplus::match>(
                 bus,
                 sdbusRule::propertiesChanged(
-                    chassisPath.string(), "xyz.openbmc_project.State.Chassis"),
+                    chassisPath.str, "xyz.openbmc_project.State.Chassis"),
                 [this, chassisId](sdbusplus::message_t& msg) {
                     this->chassisPropertyChanged(msg, chassisId);
                 });

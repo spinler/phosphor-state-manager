@@ -129,9 +129,6 @@ class ChassisSMP : public ChassisInherit
     std::vector<std::unique_ptr<sdbusplus::match>> inventoryPresentMatches;
 
     /** @brief Systemd JobNew signal match for chassis 0 target monitoring. **/
-    sdbusplus::match systemdSignalJobNew;
-
-    /** @brief Systemd JobNew signal match for chassis 0 target monitoring. **/
     std::unique_ptr<sdbusplus::bus::match_t> systemdSignalJobNew;
 
     /** @brief Cached power states from each chassis instance. **/

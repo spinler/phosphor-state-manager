@@ -226,7 +226,7 @@ bool Chassis::determineStatusOfUPSPower()
     // Find all implementations of the UPower interface
     auto mapper = bus.new_method_call(
         ObjectMapper::default_service, ObjectMapper::instance_path,
-        ObjectMapper::interface, ObjectMapper::method_names::get_sub_tree);
+        ObjectMapper::interface, "GetSubTree");
 
     mapper.append("/", 0, std::vector<std::string>({UPowerDevice::interface}));
 
@@ -269,7 +269,8 @@ bool Chassis::determineStatusOfUPSPower()
                 using Property = std::string;
                 using Value = std::variant<bool, uint>;
                 using PropertyMap = std::map<Property, Value>;
-                auto properties = response.unpack<PropertyMap>();
+                PropertyMap properties;
+                response.read(properties);
 
                 if (std::get<uint>(properties["Type"]) != TYPE_UPS)
                 {
@@ -344,7 +345,7 @@ bool Chassis::determineStatusOfPSUPower()
     // Find all implementations of the PowerSystemInputs interface
     auto mapper = bus.new_method_call(
         ObjectMapper::default_service, ObjectMapper::instance_path,
-        ObjectMapper::interface, ObjectMapper::method_names::get_sub_tree);
+        ObjectMapper::interface, "GetSubTree");
 
     mapper.append("/", 0,
                   std::vector<std::string>(
@@ -382,7 +383,8 @@ bool Chassis::determineStatusOfPSUPower()
                 using Property = std::string;
                 using Value = std::variant<std::string>;
                 using PropertyMap = std::map<Property, Value>;
-                auto properties = response.unpack<PropertyMap>();
+                PropertyMap properties;
+                response.read(properties);
 
                 auto statusStr = std::get<std::string>(properties["Status"]);
                 auto status =
@@ -644,7 +646,6 @@ Chassis::Transition Chassis::requestedPowerTransition(Transition value)
 
     if constexpr (CHECK_FWUPDATE_BEFORE_DO_TRANSITION)
     {
-<<<<<<< HEAD
         /*
          * Do not do transition when the any firmware being updated
          */

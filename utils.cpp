@@ -53,7 +53,7 @@ std::string getService(sdbusplus::bus_t& bus, std::string path,
 {
     auto mapper = bus.new_method_call(
         ObjectMapper::default_service, ObjectMapper::instance_path,
-        ObjectMapper::interface, ObjectMapper::method_names::get_object);
+        ObjectMapper::interface, "GetObject");
 
     mapper.append(path, std::vector<std::string>({interface}));
 
@@ -184,7 +184,7 @@ void createError(
 
         auto method = bus.new_method_call(
             LoggingCreate::default_service, LoggingCreate::instance_path,
-            LoggingCreate::interface, LoggingCreate::method_names::create);
+            LoggingCreate::interface, "Create");
 
         method.append(errorMsg, errLevel, additionalData);
         auto resp = bus.call(method);
@@ -211,9 +211,8 @@ void createBmcDump(sdbusplus::bus_t& bus)
     auto dumpPath = sdbusplus::object_path(DumpCreate::namespace_path::value) /
                     DumpCreate::namespace_path::bmc;
 
-    auto method = bus.new_method_call(DumpCreate::default_service, dumpPath,
-                                      DumpCreate::interface,
-                                      DumpCreate::method_names::create_dump);
+    auto method = bus.new_method_call(DumpCreate::default_service, dumpPath.str.c_str(),
+                                      DumpCreate::interface, "CreateDump");
     method.append(
         std::vector<
             std::pair<std::string, std::variant<std::string, uint64_t>>>());
@@ -244,8 +243,7 @@ bool isBmcReady(sdbusplus::bus_t& bus)
     auto bmcPath = sdbusplus::object_path(BMC::namespace_path::value) /
                    BMC::namespace_path::bmc;
 
-    auto bmcState = getProperty(bus, bmcPath, BMC::interface,
-                                BMC::property_names::current_bmc_state);
+    auto bmcState = getProperty(bus, bmcPath, BMC::interface, "CurrentBMCState");
 
     if (sdbusplus::message::convert_from_string<BMC::BMCState>(bmcState) !=
         BMC::BMCState::Ready)
@@ -279,8 +277,7 @@ bool isFirmwareUpdating(sdbusplus::bus_t& bus)
      */
     auto mapper = bus.new_method_call(
         ObjectMapper::default_service, ObjectMapper::instance_path,
-        ObjectMapper::interface,
-        ObjectMapper::method_names::get_sub_tree_paths);
+        ObjectMapper::interface, "GetSubTreePaths");
 
     mapper.append("/", 0, std::vector<std::string>({ActBlockTrans::interface}));
 
