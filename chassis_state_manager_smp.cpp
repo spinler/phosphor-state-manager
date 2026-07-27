@@ -2,6 +2,8 @@
 
 #include "chassis_state_manager_smp.hpp"
 
+#include "utils.hpp"
+
 #include <phosphor-logging/elog-errors.hpp>
 #include <phosphor-logging/lg2.hpp>
 #include <sdbusplus/exception.hpp>
@@ -449,7 +451,6 @@ ChassisSMP::PowerState ChassisSMP::currentPowerState(PowerState value)
 
 bool ChassisSMP::isChassisPresent(size_t chassisId)
 {
-    constexpr auto inventoryBusName = "xyz.openbmc_project.Inventory.Manager";
     constexpr auto inventoryObjPathFmt =
         "/xyz/openbmc_project/inventory/system/chassis{}";
 
