@@ -464,7 +464,8 @@ bool ChassisSMP::isChassisPresent(size_t chassisId)
 
         auto method = bus.new_method_call(
             inventoryBusName.c_str(), inventoryPath, PROPERTY_INTERFACE, "Get");
-        method.append(InventoryItem::interface, "Present");
+        method.append(InventoryItem::interface,
+                      InventoryItem::property_names::present);
 
         auto response = bus.call(method);
         std::variant<bool> value;
