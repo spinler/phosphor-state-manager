@@ -51,9 +51,9 @@ void subscribeToSystemdSignals(sdbusplus::bus_t& bus)
 std::string getService(sdbusplus::bus_t& bus, std::string path,
                        std::string interface)
 {
-    auto mapper = bus.new_method_call(
-        ObjectMapper::default_service, ObjectMapper::instance_path,
-        ObjectMapper::interface, "GetObject");
+    auto mapper = bus.new_method_call(ObjectMapper::default_service,
+                                      ObjectMapper::instance_path,
+                                      ObjectMapper::interface, "GetObject");
 
     mapper.append(path, std::vector<std::string>({interface}));
 
@@ -182,9 +182,9 @@ void createError(
         using LoggingCreate =
             sdbusplus::client::xyz::openbmc_project::logging::Create<>;
 
-        auto method = bus.new_method_call(
-            LoggingCreate::default_service, LoggingCreate::instance_path,
-            LoggingCreate::interface, "Create");
+        auto method = bus.new_method_call(LoggingCreate::default_service,
+                                          LoggingCreate::instance_path,
+                                          LoggingCreate::interface, "Create");
 
         method.append(errorMsg, errLevel, additionalData);
         auto resp = bus.call(method);
@@ -211,8 +211,9 @@ void createBmcDump(sdbusplus::bus_t& bus)
     auto dumpPath = sdbusplus::object_path(DumpCreate::namespace_path::value) /
                     DumpCreate::namespace_path::bmc;
 
-    auto method = bus.new_method_call(DumpCreate::default_service, dumpPath.str.c_str(),
-                                      DumpCreate::interface, "CreateDump");
+    auto method =
+        bus.new_method_call(DumpCreate::default_service, dumpPath.str.c_str(),
+                            DumpCreate::interface, "CreateDump");
     method.append(
         std::vector<
             std::pair<std::string, std::variant<std::string, uint64_t>>>());
@@ -243,7 +244,8 @@ bool isBmcReady(sdbusplus::bus_t& bus)
     auto bmcPath = sdbusplus::object_path(BMC::namespace_path::value) /
                    BMC::namespace_path::bmc;
 
-    auto bmcState = getProperty(bus, bmcPath, BMC::interface, "CurrentBMCState");
+    auto bmcState =
+        getProperty(bus, bmcPath, BMC::interface, "CurrentBMCState");
 
     if (sdbusplus::message::convert_from_string<BMC::BMCState>(bmcState) !=
         BMC::BMCState::Ready)

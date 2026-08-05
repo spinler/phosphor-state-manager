@@ -250,8 +250,8 @@ void SystemdTargetLogging::initImmediateQuiesceMonitoring()
         // This closes the race where a service crashes before our match
         // is in place -- the PropertiesChanged signal would have been
         // missed, but the state is already "failed".
-        auto getMethod = this->bus.new_method_call(SYSTEMD_SERVICE, unitPath.str.c_str(),
-                                                   PROPERTY_INTERFACE, "Get");
+        auto getMethod = this->bus.new_method_call(
+            SYSTEMD_SERVICE, unitPath.str.c_str(), PROPERTY_INTERFACE, "Get");
         getMethod.append(SYSTEMD_UNIT_INTERFACE, "ActiveState");
 
         try

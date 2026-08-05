@@ -224,9 +224,9 @@ void Chassis::determineStatusOfPower()
 bool Chassis::determineStatusOfUPSPower()
 {
     // Find all implementations of the UPower interface
-    auto mapper = bus.new_method_call(
-        ObjectMapper::default_service, ObjectMapper::instance_path,
-        ObjectMapper::interface, "GetSubTree");
+    auto mapper = bus.new_method_call(ObjectMapper::default_service,
+                                      ObjectMapper::instance_path,
+                                      ObjectMapper::interface, "GetSubTree");
 
     mapper.append("/", 0, std::vector<std::string>({UPowerDevice::interface}));
 
@@ -343,9 +343,9 @@ bool Chassis::determineStatusOfUPSPower()
 bool Chassis::determineStatusOfPSUPower()
 {
     // Find all implementations of the PowerSystemInputs interface
-    auto mapper = bus.new_method_call(
-        ObjectMapper::default_service, ObjectMapper::instance_path,
-        ObjectMapper::interface, "GetSubTree");
+    auto mapper = bus.new_method_call(ObjectMapper::default_service,
+                                      ObjectMapper::instance_path,
+                                      ObjectMapper::interface, "GetSubTree");
 
     mapper.append("/", 0,
                   std::vector<std::string>(

@@ -41,8 +41,9 @@ constexpr auto CHASSIS_SERVICE = "xyz.openbmc_project.State.Chassis{}";
 ChassisSMP::ChassisSMP(sdbusplus::bus_t& bus,
                        const sdbusplus::object_path& objPath,
                        size_t numChassis) :
-    ChassisInherit(bus, objPath.str.c_str(), ChassisInherit::action::defer_emit), bus(bus),
-    numChassis(numChassis),
+    ChassisInherit(bus, objPath.str.c_str(),
+                   ChassisInherit::action::defer_emit),
+    bus(bus), numChassis(numChassis),
     systemdSignalJobNew(std::make_unique<sdbusplus::bus::match_t>(
         bus,
         sdbusRule::type::signal() + sdbusRule::member("JobNew") +
@@ -457,10 +458,10 @@ bool ChassisSMP::isChassisPresent(size_t chassisId)
 
     try
     {
-        auto method = bus.new_method_call(inventoryBusName, inventoryPath.str.c_str(),
-                                          PROPERTY_INTERFACE, "Get");
-        method.append(InventoryItem::interface,
-                      "Present");
+        auto method =
+            bus.new_method_call(inventoryBusName, inventoryPath.str.c_str(),
+                                PROPERTY_INTERFACE, "Get");
+        method.append(InventoryItem::interface, "Present");
 
         auto response = bus.call(method);
         std::variant<bool> value;

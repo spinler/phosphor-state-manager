@@ -62,8 +62,7 @@ void SMPChassisWaiter::initializeMonitoring()
 
         auto chassisMatch = std::make_unique<sdbusplus::match>(
             bus,
-            sdbusRule::propertiesChanged(chassisPath.str,
-                                         CHASSIS_INTERFACE),
+            sdbusRule::propertiesChanged(chassisPath.str, CHASSIS_INTERFACE),
             [this, i](sdbusplus::message_t& msg) {
                 chassisPowerStateChanged(msg, i);
             });
@@ -86,8 +85,9 @@ bool SMPChassisWaiter::isChassisPresent(size_t chassisId)
 
     try
     {
-        auto method = bus.new_method_call(inventoryBusName, inventoryPath.str.c_str(),
-                                          PROPERTY_INTERFACE, "Get");
+        auto method =
+            bus.new_method_call(inventoryBusName, inventoryPath.str.c_str(),
+                                PROPERTY_INTERFACE, "Get");
         method.append(INVENTORY_INTERFACE, "Present");
 
         auto response = bus.call(method);
@@ -114,8 +114,9 @@ void SMPChassisWaiter::updateChassisPowerState(size_t chassisId)
 
     try
     {
-        auto method = bus.new_method_call(chassisService.c_str(), chassisPath.str.c_str(),
-                                          PROPERTY_INTERFACE, "Get");
+        auto method =
+            bus.new_method_call(chassisService.c_str(), chassisPath.str.c_str(),
+                                PROPERTY_INTERFACE, "Get");
         method.append(CHASSIS_INTERFACE, "CurrentPowerState");
 
         auto reply = bus.call(method);
